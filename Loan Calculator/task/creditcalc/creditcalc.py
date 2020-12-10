@@ -1,35 +1,61 @@
 # Modules
-from math import log
+import argparse
 from math import ceil
+from math import floor
+from math import log
 
-print("""What do you want to calculate?
-type \"n\" for number of monthly payments,
-type \"a\" for annuity monthly payment amount,
-type \"p\" for loan principal:""")
-parameter = input()
 
-if parameter == "n":
-    print("Enter the loan principal:")
-    principal = int(input())
-    print("Enter the monthly payment:")
-    monthly_payment = int(input())
-    print("Enter the loan interest")
-    loan_interest = float(input())
+def is_none(param):
+    if param is None:
+        return True
+    return False
 
-    i = loan_interest / (12 * 100)
-    number_of_payments = log(float(monthly_payment) / (float(monthly_payment) - i * float(principal)), i + 1)
 
-    counts = divmod(number_of_payments, 12)
+def is_negative(param):
+    if float(param) < 0:
+        return True
+    return False
+
+
+def calculate_annuity(principal, periods, interest):
+    if is_none(principal) or is_none(periods) or is_none(interest)\
+            or is_negative(principal) or is_negative(periods) or is_negative(interest):
+        print("Incorrect parameters")
+        return
+
+    p = float(principal)
+    n = int(periods)
+    i = float(interest) / (12 * 100)
+
+    annuity_payment = p * ((i * pow(1 + i, n)) / (pow(1 + i, n) - 1))
+    annuity_payment = ceil(annuity_payment)
+    overpayment = (n * annuity_payment) - p
+
+    print(f"Your annuity payment = {annuity_payment}!")
+    print(f"Overpayment = {round(overpayment)}")
+
+
+def calculate_annuity_periods(principal, payment, interest):
+    if is_none(principal) or is_none(payment) or is_none(interest) \
+            or is_negative(principal) or is_negative(payment) or is_negative(interest):
+        print("Incorrect parameters")
+        return
+
+    p = float(principal)
+    i = float(interest) / (12 * 100)
+    pay = float(payment)
+
+    n = log(pay / (pay - i * p), i + 1)
+    n = ceil(n)
+    overpayment = (n * pay) - p
+
+    counts = divmod(n, 12)
     years = round(counts[0])
     months = ceil(counts[1])
 
     if months == 12:
         years += 1
         months = 0
-
-    # years = number_of_payments / 12
-    # months = round(number_of_payments - (years * 12))
-    # years = round(years)
 
     if years == 0:
         if months == 1:
@@ -47,28 +73,71 @@ if parameter == "n":
         print(f" and {months} ", end="")
         print("month" if months == 1 else "months", end="")
         print(" to repay this loan!")
-elif parameter == "a":
-    print("Enter the loan principal:")
-    loan_principal = int(input())
-    print("Enter the number of periods:")
-    number_of_periods = int(input())
-    print("Enter the loan interest:")
-    loan_interest = float(input())
 
-    i = loan_interest / 12 / 100
-    annuity_payment = loan_principal * ((i * pow(1 + i, number_of_periods)) / (pow(1 + i, number_of_periods) - 1))
-    annuity_payment = ceil(annuity_payment)
-    print(f"Your monthly payment = {annuity_payment}!")
+    print(f"Overpayment = {round(overpayment)}")
 
-elif parameter == "p":
-    print("Enter the annuity payment:")
-    annuity_payment = float(input())
-    print("Enter the number of periods:")
-    number_of_periods = int(input())
-    print("Enter the loan interest:")
-    loan_interest = float(input())
 
-    i = loan_interest / 12 / 100
-    loan_principal = annuity_payment / ((i * pow(1 + i, number_of_periods)) / (pow(1 + i, number_of_periods) - 1))
+def calculate_annuity_principal(periods, payment, interest):
+    if is_none(periods) or is_none(payment) or is_none(interest) \
+            or is_negative(periods) or is_negative(payment) or is_negative(interest):
+        print("Incorrect parameters")
+        return
 
-    print(f"Your loan principal = {loan_principal}!")
+    n = int(periods)
+    i = float(interest) / (12 * 100)
+    pay = float(payment)
+    principal = pay / ((i * pow(1 + i, n)) / (pow(1 + i, n) - 1))
+    principal = floor(principal)
+    overpayment = (n * pay) - principal
+
+    print(f"Your loan principal = {principal}!")
+    print(f"Overpayment = {round(overpayment)}")
+
+
+def calculate_diff(principal, periods, interest):
+    if is_none(principal) or is_none(periods) or is_none(interest)\
+            or is_negative(principal) or is_negative(periods) or is_negative(interest):
+        print("Incorrect parameters")
+        return
+
+    p = float(principal)
+    n = int(periods)
+    i = float(interest) / (12 * 100)
+
+    overpayment = p
+    month = 1
+    for _ in range(n):
+        d = (p / n) + i * (p - ((p * (month - 1)) / n))
+        d = ceil(d)
+        print(f"Month {month + 1}: payment is {d}")
+        month += 1
+        overpayment -= d
+    overpayment = -1 * overpayment
+    print(f"\nOverpayment = {overpayment}")
+
+
+parser = argparse.ArgumentParser()
+parser.add_argument("--type", help="type of loan")
+parser.add_argument("--principal", help="the initial loan amount")
+parser.add_argument("--periods",  help="amount of months to make a payment")
+parser.add_argument("--payment", help="payment amount per period")
+parser.add_argument("--interest", help="the interest rate on the loan")
+
+# Store input
+args = parser.parse_args()
+
+# Check: Type
+if args.type == "annuity":
+    if args.payment is None:
+        calculate_annuity(principal=args.principal, periods=args.periods, interest=args.interest)
+    elif args.principal is None:
+        calculate_annuity_principal(periods=args.periods, payment=args.payment, interest=args.interest)
+    elif args.periods is None:
+        calculate_annuity_periods(principal=args.principal, payment=args.payment, interest=args.interest)
+elif args.type == "diff":
+    if args.payment is not None:
+        print("Incorrect parameters")
+    else:
+        calculate_diff(principal=args.principal, periods=args.periods, interest=args.interest)
+else:
+    print("Incorrect parameters")

@@ -256,6 +256,12 @@ files:
     if __name__ == '__main__':
         LoanCalcTest('creditcalc.creditcalc').run_tests()
   learner_created: false
+- name: creditcalc/__init__.py
+  visible: true
+  learner_created: true
 feedback_link: https://hyperskill.org/projects/90/stages/503/implement#comment
-status: Unchecked
+status: Solved
+feedback:
+  message: Congratulations!
+  time: Thu, 10 Dec 2020 18:31:52 UTC
 record: -1
